@@ -1,0 +1,6 @@
+[package]
+name = "ticketed_lock"
+version = "0.1.0"
+authors = ["kvark <kvark@mozilla.com>"]
+
+[dependencies]
