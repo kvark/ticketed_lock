@@ -3,7 +3,15 @@ name = "ticketed_lock"
 version = "0.1.0"
 authors = ["kvark <kvark@mozilla.com>"]
 
+[features]
+default = ["logging"]
+logging = ["log"]
+
 [dependencies]
+log = { version = "0.3", optional = true }
 
 [[example]]
 name = "order"
+
+[dev-dependencies]
+env_logger = "0.4"

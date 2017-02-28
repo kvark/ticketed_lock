@@ -1,9 +1,12 @@
+extern crate env_logger;
 extern crate ticketed_lock;
 
 use std::thread;
 use ticketed_lock as tl;
 
 fn main() {
+    env_logger::init().unwrap();
+
     let mut storage = tl::TicketedLock::new(4u8);
     let t1 = storage.read();
     let t2 = storage.read();

@@ -3,7 +3,18 @@ use std::sync::{Arc, Condvar, Mutex, Weak};
 struct Link {
     cond_var: Condvar,
     mutex: Mutex<bool>,
-    _index: usize,
+    index: usize,
+}
+
+impl Link {
+    #[cfg(feature = "logging")]
+    fn message(&self, info: &str) {
+        debug!("link[{}] - {}", self.index, info);
+    }
+    #[cfg(not(feature = "logging"))]
+    fn message(&self, _: &str) {
+        let _ = self.index;
+    }
 }
 
 struct Seal {
@@ -35,11 +46,13 @@ pub struct LockGuard {
 
 impl<A> Ticket<A> {
     pub fn wait(self) -> LockGuard {
+        self.link.message("wait");
         // block until the seal is broken
         let mut lock = self.link.mutex.lock().unwrap();
         while !*lock {
             lock = self.link.cond_var.wait(lock).unwrap();
         }
+        self.link.message("acquire");
         // transform to a guard
         LockGuard {
             _legacy: self.legacy,
@@ -68,7 +81,7 @@ impl TicketedLock {
         let link = Arc::new(Link {
             cond_var: Condvar::new(),
             mutex: Mutex::new(false),
-            _index: self.next_index,
+            index: self.next_index,
         });
         // update all the existing legacies
         let seal = Arc::new(Seal {
@@ -93,6 +106,7 @@ impl TicketedLock {
     pub fn write(&mut self) -> Ticket<Write> {
         self.last_read = None;
         let (link, legacy) = self.issue();
+        link.message("new write");
         Ticket {
             link: link,
             legacy: legacy,
@@ -103,9 +117,11 @@ impl TicketedLock {
     pub fn read(&mut self) -> Ticket<Read> {
         // check if there is already a read lock on top
         if let Some(ref ticket) = self.last_read {
+            ticket.link.message("reread");
             return ticket.clone();
         }
         let (link, legacy) = self.issue();
+        link.message("new read");
         Ticket {
             link: link,
             legacy: legacy,

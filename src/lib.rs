@@ -15,6 +15,10 @@ All the ticket counting is done based on `Arc` primitives, and the only unsafe c
 */
 #![warn(missing_docs)]
 
+#[cfg(feature = "logging")]
+#[macro_use]
+extern crate log;
+
 mod raw;
 
 use std::{mem, ops};
