@@ -23,6 +23,8 @@ pub struct ReadTicket<T> {
     data: Arc<UnsafeCell<T>>,
 }
 
+unsafe impl<T> Send for ReadTicket<T> {}
+
 impl<T> ReadTicket<T> {
     pub fn wait(self) -> ReadLockGuard<T> {
         ReadLockGuard {
@@ -55,6 +57,8 @@ pub struct WriteTicket<T> {
     inner: raw::Ticket<raw::Write>,
     data: Arc<UnsafeCell<T>>,
 }
+
+unsafe impl<T> Send for WriteTicket<T> {}
 
 impl<T> WriteTicket<T> {
     pub fn wait(self) -> WriteLockGuard<T> {
