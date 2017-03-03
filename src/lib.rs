@@ -103,6 +103,9 @@ pub struct TicketedLock<T> {
     data: Arc<UnsafeCell<T>>,
 }
 
+unsafe impl<T> Send for TicketedLock<T> {}
+unsafe impl<T> Sync for TicketedLock<T> {}
+
 impl<T> TicketedLock<T> {
     /// Create a new ticketed lock.
     pub fn new(data: T) -> TicketedLock<T> {
