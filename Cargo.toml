@@ -12,11 +12,13 @@ license = "Apache-2.0"
 exclude = ["doc", ".travis.yml"]
 
 [features]
-default = ["logging"]
+default = ["logging", "futuring"]
 logging = ["log"]
+futuring = ["futures"]
 
 [dependencies]
 log = { version = "0.3", optional = true }
+futures = { version = "0.1", optional = true }
 
 [[example]]
 name = "order"
