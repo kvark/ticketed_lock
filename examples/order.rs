@@ -4,6 +4,12 @@ extern crate ticketed_lock;
 use std::thread;
 use ticketed_lock as tl;
 
+#[cfg(feature = "futuring")]
+fn main() {
+    //empty
+}
+
+#[cfg(not(feature = "futuring"))]
 fn main() {
     env_logger::init().unwrap();
 
