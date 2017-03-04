@@ -1,6 +1,6 @@
 [package]
 name = "ticketed_lock"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Dzmitry Malyshau <kvarkus@gmail.com>"]
 description = """
 Ticketed lock system - allows one to separate lock request from the actual waiting.
@@ -12,11 +12,13 @@ license = "Apache-2.0"
 exclude = ["doc", ".travis.yml"]
 
 [features]
-default = ["logging"]
+default = ["logging", "futuring"]
 logging = ["log"]
+futuring = ["futures"]
 
 [dependencies]
 log = { version = "0.3", optional = true }
+futures = { version = "0.1", optional = true }
 
 [[example]]
 name = "order"

@@ -1,4 +1,6 @@
 use std::sync::{Arc, Condvar, Mutex, Weak};
+#[cfg(feature = "futuring")]
+use std::time::Duration;
 
 struct Link {
     cond_var: Condvar,
@@ -45,6 +47,21 @@ pub struct LockGuard {
 }
 
 impl<A> Ticket<A> {
+    #[cfg(feature = "futuring")]
+    pub fn check(&mut self) -> Option<LockGuard> {
+        self.link.message("check");
+        let lock = self.link.mutex.lock().unwrap();
+        match self.link.cond_var.wait_timeout(lock, Duration::new(0, 0)) {
+            Ok(_) => {
+                self.link.message("acquired");
+                Some(LockGuard {
+                    _legacy: self.legacy.clone(),
+                })
+            },
+            Err(_) => None,
+        }
+    }
+
     pub fn wait(self) -> LockGuard {
         self.link.message("wait");
         // block until the seal is broken
@@ -52,7 +69,7 @@ impl<A> Ticket<A> {
         while !*lock {
             lock = self.link.cond_var.wait(lock).unwrap();
         }
-        self.link.message("acquire");
+        self.link.message("acquired");
         // transform to a guard
         LockGuard {
             _legacy: self.legacy,

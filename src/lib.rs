@@ -18,12 +18,16 @@ All the ticket counting is done based on `Arc` primitives, and the only unsafe c
 #[cfg(feature = "logging")]
 #[macro_use]
 extern crate log;
+#[cfg(feature = "futuring")]
+extern crate futures;
 
 mod raw;
 
 use std::{mem, ops};
 use std::cell::UnsafeCell;
 use std::sync::Arc;
+#[cfg(feature = "futuring")]
+use futures::{Async, Future, Poll};
 
 
 /// The read-only guard of data, allowing `&T` dereferences.
@@ -48,6 +52,7 @@ pub struct ReadTicket<T> {
 
 unsafe impl<T> Send for ReadTicket<T> {}
 
+#[cfg(not(feature = "futuring"))]
 impl<T> ReadTicket<T> {
     /// Wait for the ticket to become active, returning a lock guard.
     pub fn wait(self) -> ReadLockGuard<T> {
@@ -55,6 +60,29 @@ impl<T> ReadTicket<T> {
             _inner: self.inner.wait(),
             data: self.data,
         }
+    }
+}
+
+#[cfg(feature = "futuring")]
+impl<T> Future for ReadTicket<T> {
+    type Item = ReadLockGuard<T>;
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+        match self.inner.check() {
+            Some(guard) => Ok(Async::Ready(ReadLockGuard {
+                _inner: guard,
+                data: self.data.clone(),
+            })),
+            None => Ok(Async::NotReady),
+        }
+    }
+
+    fn wait(self) -> Result<Self::Item, Self::Error> {
+        Ok(ReadLockGuard {
+            _inner: self.inner.wait(),
+            data: self.data,
+        })
     }
 }
 
@@ -86,6 +114,7 @@ pub struct WriteTicket<T> {
 
 unsafe impl<T> Send for WriteTicket<T> {}
 
+#[cfg(not(feature = "futuring"))]
 impl<T> WriteTicket<T> {
     /// Wait for the ticket to become active, returning a lock guard.
     pub fn wait(self) -> WriteLockGuard<T> {
@@ -93,6 +122,29 @@ impl<T> WriteTicket<T> {
             _inner: self.inner.wait(),
             data: self.data,
         }
+    }
+}
+
+#[cfg(feature = "futuring")]
+impl<T> Future for WriteTicket<T> {
+    type Item = WriteLockGuard<T>;
+    type Error = ();
+
+    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+        match self.inner.check() {
+            Some(guard) => Ok(Async::Ready(WriteLockGuard {
+                _inner: guard,
+                data: self.data.clone(),
+            })),
+            None => Ok(Async::NotReady),
+        }
+    }
+
+    fn wait(self) -> Result<Self::Item, Self::Error> {
+        Ok(WriteLockGuard {
+            _inner: self.inner.wait(),
+            data: self.data,
+        })
     }
 }
 
