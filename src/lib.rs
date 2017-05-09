@@ -87,7 +87,7 @@ impl<T> Future for ReadTicket<T> {
 }
 
 
-/// The read-only guard of data, allowing `&T` dereferences.
+/// The read/write guard of data, allowing `&mut T` dereferences.
 pub struct WriteLockGuard<T> {
     _inner: raw::LockGuard,
     data: Arc<UnsafeCell<T>>,
@@ -184,7 +184,7 @@ impl<T> TicketedLock<T> {
         }
     }
 
-    /// Acquire a write-only ticket.
+    /// Acquire a read/write ticket.
     pub fn write(&mut self) -> WriteTicket<T> {
         WriteTicket {
             inner: self.inner.write(),
