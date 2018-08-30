@@ -15,10 +15,10 @@ All the ticket counting is done based on `Arc` primitives, and the only unsafe c
 */
 #![warn(missing_docs)]
 
-#[cfg(feature = "logging")]
+#[cfg(feature = "log")]
 #[macro_use]
 extern crate log;
-#[cfg(feature = "futuring")]
+#[cfg(feature = "futures")]
 extern crate futures;
 
 mod raw;
@@ -26,7 +26,7 @@ mod raw;
 use std::{mem, ops};
 use std::cell::UnsafeCell;
 use std::sync::Arc;
-#[cfg(feature = "futuring")]
+#[cfg(feature = "futures")]
 use futures::{Async, Future, Poll};
 
 
@@ -52,18 +52,18 @@ pub struct ReadTicket<T> {
 
 unsafe impl<T> Send for ReadTicket<T> {}
 
-#[cfg(not(feature = "futuring"))]
+#[cfg(not(feature = "futures"))]
 impl<T> ReadTicket<T> {
     /// Wait for the ticket to become active, returning a lock guard.
-    pub fn wait(self) -> ReadLockGuard<T> {
-        ReadLockGuard {
+    pub fn wait(self) -> Result<ReadLockGuard<T>, ()> {
+        Ok(ReadLockGuard {
             _inner: self.inner.wait(),
             data: self.data,
-        }
+        })
     }
 }
 
-#[cfg(feature = "futuring")]
+#[cfg(feature = "futures")]
 impl<T> Future for ReadTicket<T> {
     type Item = ReadLockGuard<T>;
     type Error = ();
@@ -114,18 +114,18 @@ pub struct WriteTicket<T> {
 
 unsafe impl<T> Send for WriteTicket<T> {}
 
-#[cfg(not(feature = "futuring"))]
+#[cfg(not(feature = "futures"))]
 impl<T> WriteTicket<T> {
     /// Wait for the ticket to become active, returning a lock guard.
-    pub fn wait(self) -> WriteLockGuard<T> {
-        WriteLockGuard {
+    pub fn wait(self) -> Result<WriteLockGuard<T>, ()> {
+        Ok(WriteLockGuard {
             _inner: self.inner.wait(),
             data: self.data,
-        }
+        })
     }
 }
 
-#[cfg(feature = "futuring")]
+#[cfg(feature = "futures")]
 impl<T> Future for WriteTicket<T> {
     type Item = WriteLockGuard<T>;
     type Error = ();
@@ -171,7 +171,7 @@ impl<T> TicketedLock<T> {
     pub fn unlock(mut self) -> T {
         self.inner.flush();
         match Arc::try_unwrap(self.data) {
-            Ok(data) => unsafe{ data.into_inner() },
+            Ok(data) => data.into_inner(),
             Err(_) => panic!("All the locks are supposed to be done after flush()"),
         }
     }

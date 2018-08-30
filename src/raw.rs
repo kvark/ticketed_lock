@@ -1,5 +1,5 @@
 use std::sync::{Arc, Condvar, Mutex, Weak};
-#[cfg(feature = "futuring")]
+#[cfg(feature = "futures")]
 use std::time::Duration;
 
 struct Link {
@@ -9,11 +9,11 @@ struct Link {
 }
 
 impl Link {
-    #[cfg(feature = "logging")]
+    #[cfg(feature = "log")]
     fn message(&self, info: &str) {
         debug!("link[{}] - {}", self.index, info);
     }
-    #[cfg(not(feature = "logging"))]
+    #[cfg(not(feature = "log"))]
     fn message(&self, _: &str) {
         let _ = self.index;
     }
@@ -47,7 +47,7 @@ pub struct LockGuard {
 }
 
 impl<A> Ticket<A> {
-    #[cfg(feature = "futuring")]
+    #[cfg(feature = "futures")]
     pub fn check(&mut self) -> Option<LockGuard> {
         self.link.message("check");
         let lock = self.link.mutex.lock().unwrap();
