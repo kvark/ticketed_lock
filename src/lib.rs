@@ -55,11 +55,11 @@ unsafe impl<T> Send for ReadTicket<T> {}
 #[cfg(not(feature = "futuring"))]
 impl<T> ReadTicket<T> {
     /// Wait for the ticket to become active, returning a lock guard.
-    pub fn wait(self) -> ReadLockGuard<T> {
-        ReadLockGuard {
+    pub fn wait(self) -> Result<ReadLockGuard<T>, ()> {
+        Ok(ReadLockGuard {
             _inner: self.inner.wait(),
             data: self.data,
-        }
+        })
     }
 }
 
@@ -117,11 +117,11 @@ unsafe impl<T> Send for WriteTicket<T> {}
 #[cfg(not(feature = "futuring"))]
 impl<T> WriteTicket<T> {
     /// Wait for the ticket to become active, returning a lock guard.
-    pub fn wait(self) -> WriteLockGuard<T> {
-        WriteLockGuard {
+    pub fn wait(self) -> Result<WriteLockGuard<T>, ()> {
+        Ok(WriteLockGuard {
             _inner: self.inner.wait(),
             data: self.data,
-        }
+        })
     }
 }
 
