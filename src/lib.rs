@@ -171,7 +171,7 @@ impl<T> TicketedLock<T> {
     pub fn unlock(mut self) -> T {
         self.inner.flush();
         match Arc::try_unwrap(self.data) {
-            Ok(data) => unsafe{ data.into_inner() },
+            Ok(data) => data.into_inner(),
             Err(_) => panic!("All the locks are supposed to be done after flush()"),
         }
     }
