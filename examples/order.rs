@@ -11,7 +11,7 @@ fn main() {
 
 #[cfg(not(feature = "futuring"))]
 fn main() {
-    env_logger::init().unwrap();
+    env_logger::init();
 
     let mut storage = tl::TicketedLock::new(4u8);
     let t1 = storage.read();
