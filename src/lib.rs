@@ -50,7 +50,7 @@ pub struct ReadTicket<T> {
     data: Arc<UnsafeCell<T>>,
 }
 
-unsafe impl<T> Send for ReadTicket<T> {}
+unsafe impl<T: Send> Send for ReadTicket<T> {}
 
 #[cfg(not(feature = "futures"))]
 impl<T> ReadTicket<T> {
@@ -112,7 +112,7 @@ pub struct WriteTicket<T> {
     data: Arc<UnsafeCell<T>>,
 }
 
-unsafe impl<T> Send for WriteTicket<T> {}
+unsafe impl<T: Send> Send for WriteTicket<T> {}
 
 #[cfg(not(feature = "futures"))]
 impl<T> WriteTicket<T> {
