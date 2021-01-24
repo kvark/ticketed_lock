@@ -27,7 +27,12 @@ use std::{mem, ops};
 use std::cell::UnsafeCell;
 use std::sync::Arc;
 #[cfg(feature = "futures")]
-use futures::{Async, Future, Poll};
+use futures::{
+    Future,
+    task::{Context, Poll},
+};
+#[cfg(feature = "futures")]
+use std::pin::Pin;
 
 
 /// The read-only guard of data, allowing `&T` dereferences.
@@ -52,7 +57,6 @@ pub struct ReadTicket<T> {
 
 unsafe impl<T: Send> Send for ReadTicket<T> {}
 
-#[cfg(not(feature = "futures"))]
 impl<T> ReadTicket<T> {
     /// Wait for the ticket to become active, returning a lock guard.
     pub fn wait(self) -> Result<ReadLockGuard<T>, ()> {
@@ -65,24 +69,16 @@ impl<T> ReadTicket<T> {
 
 #[cfg(feature = "futures")]
 impl<T> Future for ReadTicket<T> {
-    type Item = ReadLockGuard<T>;
-    type Error = ();
+    type Output = Result<ReadLockGuard<T>, ()>;
 
-    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+    fn poll(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
         match self.inner.check() {
-            Some(guard) => Ok(Async::Ready(ReadLockGuard {
+            Some(guard) => Poll::Ready(Ok(ReadLockGuard {
                 _inner: guard,
                 data: self.data.clone(),
             })),
-            None => Ok(Async::NotReady),
+            None => Poll::Pending,
         }
-    }
-
-    fn wait(self) -> Result<Self::Item, Self::Error> {
-        Ok(ReadLockGuard {
-            _inner: self.inner.wait(),
-            data: self.data,
-        })
     }
 }
 
@@ -114,7 +110,6 @@ pub struct WriteTicket<T> {
 
 unsafe impl<T: Send> Send for WriteTicket<T> {}
 
-#[cfg(not(feature = "futures"))]
 impl<T> WriteTicket<T> {
     /// Wait for the ticket to become active, returning a lock guard.
     pub fn wait(self) -> Result<WriteLockGuard<T>, ()> {
@@ -127,24 +122,16 @@ impl<T> WriteTicket<T> {
 
 #[cfg(feature = "futures")]
 impl<T> Future for WriteTicket<T> {
-    type Item = WriteLockGuard<T>;
-    type Error = ();
+    type Output = Result<WriteLockGuard<T>, ()>;
 
-    fn poll(&mut self) -> Poll<Self::Item, Self::Error> {
+    fn poll(mut self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Self::Output> {
         match self.inner.check() {
-            Some(guard) => Ok(Async::Ready(WriteLockGuard {
+            Some(guard) => Poll::Ready(Ok(WriteLockGuard {
                 _inner: guard,
                 data: self.data.clone(),
             })),
-            None => Ok(Async::NotReady),
+            None => Poll::Pending,
         }
-    }
-
-    fn wait(self) -> Result<Self::Item, Self::Error> {
-        Ok(WriteLockGuard {
-            _inner: self.inner.wait(),
-            data: self.data,
-        })
     }
 }
 
