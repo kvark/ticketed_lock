@@ -1,11 +1,3 @@
-extern crate env_logger;
-#[cfg(feature = "futures")]
-extern crate futures;
-extern crate ticketed_lock;
-
-#[cfg(feature = "futures")]
-use futures::Future;
-
 use std::thread;
 use ticketed_lock as tl;
 
